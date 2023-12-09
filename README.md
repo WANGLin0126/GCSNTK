@@ -7,7 +7,8 @@ torch==1.12.1+cu116 \
 numpy==1.21.6  \
 scipy==1.7.3 \
 scikit_learn==1.0.2 \
-ogb==1.3.6 
+ogb==1.3.6 \
+torch_geometric==2.3.0
 
 
 ## Training
