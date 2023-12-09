@@ -3,6 +3,7 @@
 
 ## Requirements
 
+python==3.7.0 \
 torch==1.12.1+cu116 \
 numpy==1.21.6  \
 scipy==1.7.3 \
