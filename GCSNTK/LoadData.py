@@ -40,7 +40,7 @@ def GCF(adj, x, k=1):
 
 
 def load_data(root,name,k):
-    if name in ['Cora','CiteSeer','PubMed']:
+    if name in ['Cora','Citeseer','Pubmed']:
         dataset    = Planetoid(root=root,name=name,split='public')
         train_mask = dataset[0]['train_mask']
         val_mask   = dataset[0]['val_mask']
