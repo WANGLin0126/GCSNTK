@@ -40,14 +40,14 @@ def GCF(adj, x, k=1):
 
 
 def load_data(root,name,k):
-    if name in ['Cora','Citeseer','Pubmed']:
+    if name in ['Cora','Citeseer','Pubmed']:  # Planetoid
         dataset    = Planetoid(root=root,name=name,split='public')
         train_mask = dataset[0]['train_mask']
         val_mask   = dataset[0]['val_mask']
         test_mask  = dataset[0]['test_mask']
         x          = dataset[0]['x']           # all features
         y          = dataset[0]['y']           # all labels
-    elif name in ['Computers','Photo']:
+    elif name in ['Computers','Photo']:         # Amazon
         dataset    = Amazon(root=root,name=name)
         x          = dataset[0]['x']           # all features
         y          = dataset[0]['y']           # all labels
