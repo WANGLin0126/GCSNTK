@@ -1,7 +1,7 @@
 import torch
 from torch import nn
-print('load ogb')
-import ogb
+# print('load ogb')
+# import ogb
 print('load ogb.nodeproppred')
 from ogb.nodeproppred import dataset
 print('load sklearn')
@@ -30,7 +30,6 @@ class OgbDataLoader(nn.Module):
         self.k        = torch.round(torch.tensor(self.n_split/batch_size)).to(torch.int)
         self.split_feat   = features[self.split_idx]
         self.split_label  = labels[self.split_idx]
-
 
 
         self.split_method = split_method

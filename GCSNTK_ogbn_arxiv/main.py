@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description='SNTK computation')
 parser.add_argument('--dataset', type=str, default="ogbn-arxiv", help='name of dataset (default: ogbn-arxiv)')
 parser.add_argument('--cond_size', type=float, default=44, help='condensed ratio of the training set (default: 0.5, the condened set is 0.5*training set)')
 parser.add_argument('--ridge', type=float, default=1e-6, help='ridge parameter of KRR (default: 1e-3)')
-parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train (default: 100)')
+parser.add_argument('--epochs', type=int, default=100, help='number of epochs to train (default: 100)')
 parser.add_argument('--lr', type=float, default=5e-3, help='learning rate (default: 0.005)')
 parser.add_argument('--K', type=int, default=1, help='number of aggr in SNTK (default: 2)')
 parser.add_argument('--L', type=int, default=1, help='the number of layers after each aggr (default: 2)')
@@ -31,7 +31,7 @@ parser.add_argument('--k', type=int, default=1, help='the convolutiona times of 
 parser.add_argument('--set_seed', type=bool, default=False, help='whether to set seed')
 parser.add_argument('--adj', type=bool, default=False, help='condese adj or not (default: False)')
 parser.add_argument('--seed', type=int, default=5, help='setup the random seed (default: 5)')
-parser.add_argument('--iter', type=int, default=2, help='iteration times (default: 3)')
+parser.add_argument('--iter', type=int, default=3, help='iteration times (default: 3)')
 args = parser.parse_args()
 
 
@@ -68,8 +68,8 @@ def test(G_t, G_s, y_t, y_s, A_t, A_s, loss_fn):
 
 
 name = args.dataset
-train_loader = OgbDataLoader(dataset_name=name, split='train', batch_size=1000, split_method='kmeans')
-test_loader  = OgbDataLoader(dataset_name=name, split='test', batch_size=1000, split_method='kmeans')
+train_loader = OgbDataLoader(dataset_name=name, split='train', batch_size=500, split_method='kmeans')
+test_loader  = OgbDataLoader(dataset_name=name, split='test', batch_size=500, split_method='kmeans')
 TRAIN_K,n_train,n_class, dim, n  = train_loader.properties()
 test_k,n_test,_,_,_              = test_loader.properties()
 
