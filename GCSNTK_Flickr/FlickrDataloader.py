@@ -10,7 +10,7 @@ class FlickrDataLoader(nn.Module):
         elif name == 'Reddit':
             from torch_geometric.datasets import Reddit as DataSet
 
-        Dataset       = DataSet("./datasets/" + name, None, None)
+        Dataset       = DataSet(root="./datasets/" + name)
         self.n, self.dim = Dataset[0].x.shape
         mask          = split + '_mask'
         features      = Dataset[0].x
@@ -22,11 +22,12 @@ class FlickrDataLoader(nn.Module):
         sparse_eye    = torch.sparse_coo_tensor(torch.arange(self.n).repeat(2, 1), torch.ones(self.n), (self.n, self.n))
         self.Adj      = Adj + sparse_eye
         features      = self.normalize_data(features)
+        # features      = self.GCF(self.Adj, features, k=2)
         self.split_idx= torch.where(Dataset[0][mask])[0]
         self.n_split  = len(self.split_idx)
         self.k        = torch.round(torch.tensor(self.n_split/batch_size)).to(torch.int)
 
-
+        # Masked Adjacency Matrix
         optor_index       = torch.cat((self.split_idx.reshape(1,self.n_split),torch.tensor(range(self.n_split)).reshape(1,self.n_split)),dim=0)
         optor_value       = torch.ones(self.n_split)
         optor_shape       = torch.Size([self.n,self.n_split])
@@ -47,10 +48,10 @@ class FlickrDataLoader(nn.Module):
         return:
             torch.Tensor, normalized data
         """
-        mean = data.mean(dim=0)
-        std = data.std(dim=0) 
-        std[std == 0] = 1 
-        normalized_data = (data - mean) / std
+        mean = data.mean(dim=0) # 沿第0维（即样本维）求均值
+        std = data.std(dim=0)   # 沿第0维（即样本维）求标准差
+        std[std == 0] = 1       # 将std中的0值替换为1，以避免分母为0的情况
+        normalized_data = (data - mean) / std  # 对数据进行归一化处理
         return normalized_data
 
     def GCF(self, adj, x, k=2):
@@ -90,6 +91,9 @@ class FlickrDataLoader(nn.Module):
             self.batch_labels = kmeans.predict(self.split_feat.numpy())
 
     def getitem(self, idx):
+        """
+        对于给定的 idx 输出对应的 node_features, labels, sub Ajacency matrix
+        """
         # idx   = [idx]
         n_idx   = len(idx)
         idx_raw = self.split_idx[idx]
