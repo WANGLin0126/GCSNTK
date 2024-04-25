@@ -41,7 +41,6 @@ class StructureBasedNeuralTangentKernel(nn.Module):
         S = torch.sparse.mm(aggr_optor,S.reshape(-1)[:,None]).reshape(n1,n2)* scale_mat
         return  S
 
-
     def update_sigma(self, S, diag1, diag2):
         S    = S / diag1[:, None] / diag2[None, :]
         S    = torch.clip(S,-0.9999,0.9999)
@@ -58,9 +57,9 @@ class StructureBasedNeuralTangentKernel(nn.Module):
         S    = S * diag[:, None] * diag[None, :]
         return S, diag
     
-    def diag(self, g, A):
-        n = A.shape[0]
-        aggr_optor = self.sparse_kron(A, A)
+    def diag(self, g, E):
+        n = E.shape[0]
+        aggr_optor = self.sparse_kron(E, E)
         if self.scale == 'add':
             scale_mat = 1.
         else:
@@ -68,15 +67,15 @@ class StructureBasedNeuralTangentKernel(nn.Module):
         diag_list = []
         sigma = torch.matmul(g, g.t())
         for k in range(self.K):
-            sigma = self.aggr(sigma,aggr_optor, n, n, scale_mat )
+            sigma = self.aggr(sigma, aggr_optor, n, n, scale_mat)
             for l in range(self.L):
                 sigma, diag = self.update_diag(sigma)
                 diag_list.append(diag)
         return diag_list
 
-    def nodes_gram(self, g1, g2, A1, A2):
+    def nodes_gram(self, g1, g2, E1, E2):
         n1,n2 = len(g1),len(g2)
-        aggr_optor = self.sparse_kron(A1, A2)
+        aggr_optor = self.sparse_kron(E1, E2)
 
         if self.scale == 'add':
             scale_mat = 1.
@@ -85,12 +84,12 @@ class StructureBasedNeuralTangentKernel(nn.Module):
 
         sigma = torch.matmul(g1, g2.t())
         theta = sigma
-        diag_list1, diag_list2 = self.diag(g1, A1), self.diag(g2, A2)
+        diag_list1, diag_list2 = self.diag(g1, E1), self.diag(g2, E2)
 
         for k in range(self.K):
+            sigma = self.aggr(sigma, aggr_optor, n1, n2, scale_mat)
+            theta = self.aggr(theta, aggr_optor, n1, n2, scale_mat)
 
-            sigma = self.aggr(sigma,aggr_optor, n1, n2, scale_mat )
-            theta = self.aggr(theta,aggr_optor, n1, n2, scale_mat )
             for l in range(self.L):
                 sigma, degree_sigma = self.update_sigma(sigma, diag_list1[k*self.L+l], diag_list2[k*self.L+l])
                 theta = theta * degree_sigma + sigma
