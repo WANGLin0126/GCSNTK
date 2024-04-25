@@ -15,6 +15,9 @@ import argparse
 import numpy as np
 import random
 
+
+
+
 parser = argparse.ArgumentParser(description='GDKRR Generalization')
 parser.add_argument('--model', type=str, default="GCN", help='name of model [GAT, SAGE, SGC, MLP, Cheby, GCN, APPNPModel] (default: GCN)')
 parser.add_argument('--dataset', type=str, default="Cora", help='name of dataset [Cora, Citeseer, Pubmed](default: Cora)')
