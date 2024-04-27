@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description='SNTK computation')
 parser.add_argument('--dataset', type=str, default="Flickr", help='name of dataset (default: Flickr)')
 parser.add_argument('--cond_size', type=float, default=44, help='condensation size)')
 parser.add_argument('--ridge', type=float, default=1e-5, help='ridge parameter of KRR (default: 1e-3)')
-parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 100)')
+parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train (default: 100)')
 parser.add_argument('--lr', type=float, default=2e-3, help='learning rate (default: 0.005)')
 parser.add_argument('--K', type=int, default=1, help='number of aggr in SNTK (default: 2)')
 parser.add_argument('--L', type=int, default=1, help='the number of layers after each aggr (default: 2)')
@@ -31,7 +31,7 @@ parser.add_argument('--adj', type=bool, default=True, help='condese adj or not (
 parser.add_argument('--batch_size', type=int, default=2000, help='batch size (default: 4000)')
 parser.add_argument('--accumulate_steps', type=int, default=10, help='accumulate steps (default: 10)')
 parser.add_argument('--save', type=bool, default=False, help='save the results (default: False)')
-parser.add_argument('--iterations', type=int, default=2, help='number of iterations of the whole experiments (default: 10)')
+parser.add_argument('--iterations', type=int, default=3, help='number of iterations of the whole experiments (default: 10)')
 args = parser.parse_args()
 
 

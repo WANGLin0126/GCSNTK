@@ -54,6 +54,7 @@ class FlickrDataLoader(nn.Module):
         normalized_data = (data - mean) / std  # 对数据进行归一化处理
         return normalized_data
 
+
     def GCF(self, adj, x, k=2):
         """
         Graph convolution filter
