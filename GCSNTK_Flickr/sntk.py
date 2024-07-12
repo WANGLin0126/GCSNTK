@@ -37,9 +37,29 @@ class StructureBasedNeuralTangentKernel(nn.Module):
         return torch.sparse_coo_tensor(new_ind, values, new_shape)
 
 
-    def aggr(self, S, aggr_optor, n1, n2, scale_mat):
-        S = torch.sparse.mm(aggr_optor,S.reshape(-1)[:,None]).reshape(n1,n2)* scale_mat
-        return  S
+    # def aggr(self, S, aggr_optor, n1, n2, scale_mat):
+    #     S = torch.sparse.mm(aggr_optor,S.reshape(-1)[:,None]).reshape(n1,n2)* scale_mat
+    #     return  S
+
+    def aggr(self, S, A1, A2):
+        """
+        Aggregation opteration on sparse or dense matrix
+        S = A1 * S * A2.t()
+        """
+        if A1.is_sparse and A2.is_sparse:                   # A1, A2 are sparse
+            S = torch.sparse.mm(A1,S)
+            S = torch.sparse.mm(A2,S.t()).t()
+        elif A1.is_sparse and not A2.is_sparse:             # A1 is sparse, A2 is dense
+            S = torch.sparse.mm(A1,S)
+            S = torch.matmul(S,A2.t())
+        elif not A1.is_sparse and A2.is_sparse:             # A1 is dense, A2 is sparse
+            S = torch.matmul(A1,S)
+            S = torch.sparse.mm(A2,S.t()).t()
+        else:                                               # A1, A2 are dense
+            S = torch.matmul(torch.matmul(A1,S),A2.t())     # (A1 * S) * A2.t()
+        return S
+
+
 
     def update_sigma(self, S, diag1, diag2):
         S    = S / diag1[:, None] / diag2[None, :]
@@ -59,35 +79,40 @@ class StructureBasedNeuralTangentKernel(nn.Module):
     
     def diag(self, g, E):
         n = E.shape[0]
-        aggr_optor = self.sparse_kron(E, E)
-        if self.scale == 'add':
-            scale_mat = 1.
-        else:
-            scale_mat = (1./torch.sparse.sum(aggr_optor,1).to_dense()).reshape(n,n)
+        # aggr_optor = self.sparse_kron(E, E)
+        # if self.scale == 'add':
+        #     scale_mat = 1.
+        # else:
+        #     scale_mat = (1./torch.sparse.sum(aggr_optor,1).to_dense()).reshape(n,n)
         diag_list = []
         sigma = torch.matmul(g, g.t())
         for k in range(self.K):
-            sigma = self.aggr(sigma, aggr_optor, n, n, scale_mat)
+            # sigma = self.aggr(sigma, aggr_optor, n, n, scale_mat)
+            sigma = self.aggr(sigma, E, E)
             sigma, diag = self.update_diag(sigma)
             diag_list.append(diag)
         return diag_list
 
     def nodes_gram(self, g1, g2, E1, E2):
         n1,n2 = len(g1),len(g2)
-        aggr_optor = self.sparse_kron(E1, E2)
+        # aggr_optor = self.sparse_kron(E1, E2)
 
-        if self.scale == 'add':
-            scale_mat = 1.
-        else:
-            scale_mat = (1./torch.sparse.sum(aggr_optor,1).to_dense()).reshape(n1,n2)
+        # if self.scale == 'add':
+        #     scale_mat = 1.
+        # else:
+        #     scale_mat = (1./torch.sparse.sum(aggr_optor,1).to_dense()).reshape(n1,n2)
 
         sigma = torch.matmul(g1, g2.t())
         theta = sigma
         diag_list1, diag_list2 = self.diag(g1, E1), self.diag(g2, E2)
 
         for k in range(self.K):
-            sigma = self.aggr(sigma, aggr_optor, n1, n2, scale_mat)
-            theta = self.aggr(theta, aggr_optor, n1, n2, scale_mat)
+            # sigma = self.aggr(sigma, aggr_optor, n1, n2, scale_mat)
+            # theta = self.aggr(theta, aggr_optor, n1, n2, scale_mat)
+
+            sigma = self.aggr(sigma, E1, E2)
+            theta = self.aggr(sigma, E1, E2)
+
 
             for l in range(self.L):
                 sigma, degree_sigma = self.update_sigma(sigma, diag_list1[k], diag_list2[k])

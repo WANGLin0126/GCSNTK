@@ -19,15 +19,15 @@ print(f"Using {device} device")
 
 parser = argparse.ArgumentParser(description='SNTK computation')
 parser.add_argument('--dataset', type=str, default="Flickr", help='name of dataset (default: Flickr)')
-parser.add_argument('--cond_size', type=float, default=44, help='condensation size)')
+parser.add_argument('--cond_size', type=int, default=44, help='condensation size)')
 parser.add_argument('--ridge', type=float, default=1e-5, help='ridge parameter of KRR (default: 1e-3)')
 parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train (default: 100)')
-parser.add_argument('--lr', type=float, default=2e-3, help='learning rate (default: 0.005)')
+parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 0.005)')
 parser.add_argument('--K', type=int, default=1, help='number of aggr in SNTK (default: 2)')
 parser.add_argument('--L', type=int, default=1, help='the number of layers after each aggr (default: 2)')
 parser.add_argument('--scale', type=str, default='add', help='scale of SNTK [average,add] (default: average)')
 parser.add_argument('--seed', type=int, default=5, help='setup the random seed (default: 5)')
-parser.add_argument('--adj', type=bool, default=True, help='condese adj or not (default: True)')
+parser.add_argument('--adj', type=bool, default=False, help='condese adj or not (default: True)')
 parser.add_argument('--batch_size', type=int, default=2000, help='batch size (default: 4000)')
 parser.add_argument('--accumulate_steps', type=int, default=10, help='accumulate steps (default: 10)')
 parser.add_argument('--save', type=bool, default=False, help='save the results (default: False)')
@@ -108,7 +108,7 @@ print(f"Num of batches:{TRAIN_K}")
 print(f"Iterations    :{args.iterations}")
 
 
-
+Time = torch.zeros(args.epochs,args.iterations)
 results = torch.zeros(args.epochs,args.iterations)
 for iter in range(args.iterations):
     print(f"The  {iter+1}-th iteration")
@@ -118,7 +118,7 @@ for iter in range(args.iterations):
         feat = x_s.data
         A_s  = update_E(feat,3)
     else:
-        A_s = torch.sparse_coo_tensor(torch.stack([idx_s, idx_s], dim=0), torch.ones(args.cond_size), torch.Size([args.cond_size, args.cond_size])).to(x_s.device)
+        A_s = torch.sparse_coo_tensor(torch.stack([idx_s, idx_s], dim=0), torch.ones(args.cond_size), (args.cond_size, args.cond_size)).to(x_s.device)
 
 
     MSEloss = nn.MSELoss().to(device)
@@ -135,10 +135,6 @@ for iter in range(args.iterations):
     start = time.time()
 
     T = 0
-    Time = []
-    Time.append(T)
-
-
     for t in range(args.epochs):
         print(f"Epoch {t+1}", end=" ")
         train_loss, test_lossi = torch.zeros(TRAIN_K),  torch.zeros(test_k)
@@ -162,7 +158,7 @@ for iter in range(args.iterations):
 
         b = time.time()
         T = T + b-a
-        Time.append(T)
+        Time[t,iter] = T
         training_loss_avg = torch.mean(train_loss)
         training_acc_avg = (train_correct_all / n_train) * 100
 
@@ -198,6 +194,11 @@ for iter in range(args.iterations):
 
 Acc_mean,Acc_std = torch.mean(results, dim=1),torch.std(results, dim=1)
 max_mean, max_mean_index = torch.max(Acc_mean, dim=0)
+
+Time_mean = torch.mean(Time, dim=1)
+Time_Acc  = torch.cat((Time_mean.reshape(-1,1), Acc_mean.reshape(-1,1)), dim=1)
+# print(np.array(Time_Acc.cpu()))
+torch.save(Time_Acc, 'Time_Acc.pt')
 print(f'Mean Test Acc: {max_mean.item():>0.4f}%, Std: {Acc_std[max_mean_index].item():>0.4f}%')
 print("--------------- Train Done! ----------------")
 

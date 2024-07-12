@@ -10,12 +10,13 @@ from utils import update_E, sub_E
 import argparse
 import numpy as np
 import random
+import time
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
 parser = argparse.ArgumentParser(description='SNTK computation')
-parser.add_argument('--dataset', type=str, default="Cora", help='name of dataset [Cora, Citeseer, Pubmed, Photo, Computers] (default: Cora)')
+parser.add_argument('--dataset', type=str, default="Photo", help='name of dataset [Cora, Citeseer, Pubmed, Photo, Computers] (default: Cora)')
 parser.add_argument('--cond_ratio', type=float, default=0.5, help='condensed ratio of the training set (default: 0.5, the condened set is 0.5*training set)')
 parser.add_argument('--ridge', type=float, default=1e0, help='ridge parameter of KRR (default: 1e-4)')
 parser.add_argument('--k', type=int, default=2, help='the iteration times of the Graph Convolution when loading data (default: 3)')
@@ -115,7 +116,7 @@ def test(G_t, G_s, y_t, y_s, E_t, E_s, loss_fn):
     print(f"Test Acc: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}",end = '\n')
     return test_loss, correct*100
 
-
+Time = torch.zeros(args.epochs,args.iter).to(device)
 Acc = torch.zeros(args.epochs,args.iter).to(device)
 for iter in range(args.iter):
     print('--------------------------------------------------')
@@ -134,15 +135,22 @@ for iter in range(args.iter):
     y_s.requires_grad = True
     optimizer = torch.optim.Adam([x_s,y_s], lr=args.lr)
 
+    T = 0
     for epoch in range(args.epochs):
+        a = time.time()
         print(f"Epoch {epoch+1}", end=" ")
         x_s, y_s, training_loss, training_acc = train(x_train, x_s, y_train_one_hot, y_s, E_train, E_s,  MSEloss, optimizer)
+        T = T + time.time()-a
+        Time[epoch,iter] = T
 
         test_loss, test_acc = test(x_test, x_s, y_test_one_hot, y_s, E_test, E_s,  MSEloss)
         Acc[epoch,iter] = test_acc
 
 Acc_mean,Acc_std = torch.mean(Acc, dim=1),torch.std(Acc, dim=1)
 
+Time_mean = torch.mean(Time, dim=1)
+Time_Acc  = torch.cat((Time_mean.reshape(-1,1), Acc_mean.reshape(-1,1)), dim=1)
+print(np.array(Time_Acc.cpu()))
 
 print('Mean and std of test data : {:.4f}, {:.4f}'.format(Acc_mean[-1], Acc_std[-1]))
 print("--------------- Train Done! ----------------")

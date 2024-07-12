@@ -34,11 +34,12 @@ class FlickrDataLoader(nn.Module):
         optor             = torch.sparse_coo_tensor(optor_index, optor_value, optor_shape)
         self.Adj_mask     = torch.sparse.mm(torch.sparse.mm(optor.t(), self.Adj), optor)
         self.split_feat   = features[self.split_idx]
-        # self.split_feat   = self.GCF(self.Adj_mask, self.split_feat, k = 2)
+        self.split_feat   = self.GCF(self.Adj_mask, self.split_feat, k = 2)
 
         self.split_label  = labels[self.split_idx]
         self.split_method = split_method
         self.n_classes    = Dataset.num_classes
+        self.batch_labels_list = []
 
     def normalize_data(self, data):
         """
@@ -90,6 +91,9 @@ class FlickrDataLoader(nn.Module):
             kmeans = KMeans(n_clusters = self.k)
             kmeans.fit(self.split_feat.numpy())
             self.batch_labels = kmeans.predict(self.split_feat.numpy())
+        for i in range(self.k):
+            idx       = torch.where(torch.tensor(self.batch_labels) == i)[0]
+            self.batch_labels_list.append(idx)
 
     def getitem(self, idx):
         """
@@ -111,6 +115,7 @@ class FlickrDataLoader(nn.Module):
         return (feat, label, sub_A)
 
     def get_batch(self, i):
-        idx       = torch.where(torch.tensor(self.batch_labels) == i)[0]
+        # idx       = torch.where(torch.tensor(self.batch_labels) == i)[0]
+        idx       = self.batch_labels_list[i]
         batch_i   = self.getitem(idx)
         return batch_i

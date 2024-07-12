@@ -51,8 +51,9 @@ dataset = Planetoid(root='./datasets/', name=args.dataset, split='public')
 data = dataset[0]  
 num_features = dataset.num_features
 num_classes  = dataset.num_classes
-criterion = nn.MSELoss()
 loader    = DataLoader(dataset, batch_size=32, shuffle=False)
+criterion = nn.MSELoss()
+
 
 
 x_s = torch.load(args.dataset+'_'+str(args.cond_ratio)+'_x_s.pt', map_location=torch.device('cpu')).to(device)
