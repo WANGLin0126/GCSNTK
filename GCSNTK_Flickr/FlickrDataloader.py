@@ -100,22 +100,22 @@ class FlickrDataLoader(nn.Module):
         对于给定的 idx 输出对应的 node_features, labels, sub Ajacency matrix
         """
         # idx   = [idx]
-        n_idx   = len(idx)
-        idx_raw = self.split_idx[idx]
-        feat    = self.split_feat[idx]
-        label   = self.split_label[idx]
+        n_idx   = torch.tensor(len(idx)).to(idx.device)
+        idx_raw = torch.tensor(self.split_idx[idx]).to(idx.device)
+        feat    = torch.tensor(self.split_feat[idx]).to(idx.device)
+        label   = torch.tensor(self.split_label[idx]).to(idx.device)
         # idx   = idx.tolist()
 
-        optor_index = torch.cat((idx_raw.reshape(1,n_idx),torch.tensor(range(n_idx)).reshape(1,n_idx)),dim=0)
-        optor_value = torch.ones(n_idx)
+        optor_index = torch.cat((idx_raw.reshape(1,n_idx),torch.tensor(range(n_idx)).reshape(1,n_idx).to(idx.device)),dim=0)
+        optor_value = torch.ones(n_idx).to(idx.device)
         optor_shape = torch.Size([self.n,n_idx])
-        optor       = torch.sparse_coo_tensor(optor_index, optor_value, optor_shape)
-        sub_A       = torch.sparse.mm(torch.sparse.mm(optor.t(), self.Adj), optor)
+        optor       = torch.sparse_coo_tensor(optor_index, optor_value, optor_shape).to(idx.device)
+        sub_A       = torch.sparse.mm(torch.sparse.mm(optor.t(), self.Adj.to(idx.device)), optor)
 
         return (feat, label, sub_A)
 
     def get_batch(self, i):
         # idx       = torch.where(torch.tensor(self.batch_labels) == i)[0]
-        idx       = self.batch_labels_list[i]
+        idx       = torch.tensor(self.batch_labels_list[i]).to(i.device)
         batch_i   = self.getitem(idx)
         return batch_i

@@ -18,11 +18,11 @@ print(f"Using {device} device")
 
 
 parser = argparse.ArgumentParser(description='SNTK computation')
-parser.add_argument('--dataset', type=str, default="Flickr", help='name of dataset (default: Flickr)')
-parser.add_argument('--cond_size', type=int, default=44, help='condensation size)')
+parser.add_argument('--dataset', type=str, default="Reddit", help='name of dataset (default: Flickr)')
+parser.add_argument('--cond_size', type=int, default=153, help='condensation size)')
 parser.add_argument('--ridge', type=float, default=1e-5, help='ridge parameter of KRR (default: 1e-3)')
-parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train (default: 100)')
-parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 0.005)')
+parser.add_argument('--epochs', type=int, default=400, help='number of epochs to train (default: 100)')
+parser.add_argument('--lr', type=float, default=2e-3, help='learning rate (default: 0.005)')
 parser.add_argument('--K', type=int, default=1, help='number of aggr in SNTK (default: 2)')
 parser.add_argument('--L', type=int, default=1, help='the number of layers after each aggr (default: 2)')
 parser.add_argument('--scale', type=str, default='add', help='scale of SNTK [average,add] (default: average)')
@@ -118,7 +118,7 @@ for iter in range(args.iterations):
         feat = x_s.data
         A_s  = update_E(feat,3)
     else:
-        A_s = torch.sparse_coo_tensor(torch.stack([idx_s, idx_s], dim=0), torch.ones(args.cond_size), (args.cond_size, args.cond_size)).to(x_s.device)
+        A_s = torch.sparse_coo_tensor(torch.stack([idx_s, idx_s], dim=0).to(device), torch.ones(args.cond_size).to(device), (args.cond_size, args.cond_size)).to(x_s.device)
 
 
     MSEloss = nn.MSELoss().to(device)
@@ -142,14 +142,13 @@ for iter in range(args.iterations):
 
         a = time.time()
         for i in range(TRAIN_K):
-
+            i = torch.tensor(i).to(device)
             x_train, label, sub_A_t  = train_loader.get_batch(i)
             y_train_one_hot          = F.one_hot(label.reshape(-1), n_class)
 
-
-            x_train = x_train.to(device)
+            # x_train = x_train.to(device)
             y_train_one_hot = y_train_one_hot.to(device)
-            sub_A_t = sub_A_t.to(device)
+            # sub_A_t = sub_A_t.to(device)
 
             _, _, training_loss, train_correct = train(x_train, x_s, y_train_one_hot, y_s, sub_A_t, A_s,  MSEloss, optimizer, args.accumulate_steps, i)
 
@@ -164,8 +163,9 @@ for iter in range(args.iterations):
 
         test_a = time.time()
 
-        if t >= 1:
+        if t >= 0:
             for j in range(test_k):
+                j = torch.tensor(j).to(device)
                 x_test, test_label, sub_A_test  = test_loader.get_batch(j)
                 y_test_one_hot       = F.one_hot(test_label.reshape(-1), n_class)
 
