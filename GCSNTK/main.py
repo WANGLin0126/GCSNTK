@@ -16,10 +16,10 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
 
 parser = argparse.ArgumentParser(description='SNTK computation')
-parser.add_argument('--dataset', type=str, default="Photo", help='name of dataset [Cora, Citeseer, Pubmed, Photo, Computers] (default: Cora)')
+parser.add_argument('--dataset', type=str, default="Citeseer", help='name of dataset [Cora, Citeseer, Pubmed, Photo, Computers] (default: Cora)')
 parser.add_argument('--cond_ratio', type=float, default=0.5, help='condensed ratio of the training set (default: 0.5, the condened set is 0.5*training set)')
-parser.add_argument('--ridge', type=float, default=1e0, help='ridge parameter of KRR (default: 1e-4)')
-parser.add_argument('--k', type=int, default=2, help='the iteration times of the Graph Convolution when loading data (default: 3)')
+parser.add_argument('--ridge', type=float, default=1e-3, help='ridge parameter of KRR (default: 1e-4)')
+parser.add_argument('--k', type=int, default=3, help='the iteration times of the Graph Convolution when loading data (default: 3)')
 parser.add_argument('--epochs', type=int, default=120, help='number of epochs to train (default: 100)')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate (default: 0.005)')
 parser.add_argument('--K', type=int, default=2, help='number of aggr in SNTK (default: 2)')
